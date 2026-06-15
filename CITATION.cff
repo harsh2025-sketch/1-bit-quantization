@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Dinodia"
+  given-names: "Harsh"
+title: "Hourglass Quantization and Context-Bounded Training Strategies for Ternary Transformers"
+version: 0.1-alpha
+date-released: 2026-06-15
+url: "https://github.com/harsh2025-sketch/1-bit-quantization"

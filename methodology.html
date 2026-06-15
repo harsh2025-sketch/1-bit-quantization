@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Methodology | Hourglass Quantization</title>
+    <meta name="description" content="Methodology summary for Hourglass Quantization">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="hero">
+        <div class="container">
+            <div class="notice-box">
+                <div class="notice-icon">📄</div>
+                <div class="notice-text">
+                    <strong>Methodology:</strong> This page summarizes the technical approach and links to the fully rendered paper page.
+                </div>
+            </div>
+            <h1>Methodology</h1>
+            <p class="subtitle">Technical details for Hourglass Quantization and Context-Bounded Training Strategies</p>
+            <div class="meta-info">
+                <span class="tag">Feasibility Study</span>
+                <span class="tag">June 2026</span>
+            </div>
+            <div class="hero-actions">
+                <a href="paper.html" class="btn primary-btn">Open Full Paper</a>
+                <a href="index.html" class="btn secondary-btn">Back to Home</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card glass-card">
+            <h2>Abstract</h2>
+            <p>Recent advancements in extreme low-bit serialization have demonstrated the viability of 1.58-bit ternary large language models for minimizing computational and memory footprints. However, standard low-bit architectures introduce a hypothesized degradation mechanism we term Boundary Representation Collapse at the embedding interfaces, suffer from signal amplitude decay at extreme depths, and fail to address the memory asymmetry wherein continuous 16-bit Key-Value (KV) cache tensors outgrow weight parameters at extended context scales. This paper introduces a hardware-bounded transformer framework to investigate these scaling anomalies.</p>
+        </section>
+
+        <section class="card">
+            <h2>Navigation</h2>
+            <p>The full paper is available on-site at <a href="paper.html">paper.html</a>.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>Copyright © 2026 Harsh Dinodia.</p>
+            <p>GitHub: <a href="https://github.com/harsh2025-sketch" target="_blank" rel="noreferrer noopener">harsh2025-sketch</a></p>
+        </div>
+    </footer>
+</body>
+</html>

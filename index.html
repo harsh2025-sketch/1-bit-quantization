@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hourglass Quantization | Ternary Transformers</title>
+    <meta name="description" content="Hourglass Quantization and Context-Bounded Training Strategies for Ternary Transformers">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+    <header class="hero">
+        <div class="container">
+            <div class="notice-box">
+                <div class="notice-icon">⚠️</div>
+                <div class="notice-text">
+                    <strong>IMPORTANT NOTICE:</strong> This document presents a systems design proposal accompanied by preliminary implementation observations. Several mechanisms introduced herein remain hypotheses that have not yet been validated through controlled ablation studies.
+                </div>
+            </div>
+
+            <h1>Hourglass Quantization<br><span class="gradient-text">Ternary Transformers</span></h1>
+            <p class="subtitle">Design, Implementation, and Preliminary Feasibility Observations</p>
+
+            <div class="meta-info">
+                <span class="tag">Systems Proposal</span>
+                <span class="tag">Feasibility Study</span>
+                <span class="tag">June 2026</span>
+            </div>
+
+            <div class="hero-actions">
+                <a href="paper/papper%20(3).pdf" class="btn primary-btn" target="_blank" rel="noreferrer noopener">Full Paper (PDF)</a>
+                <a href="#summary" class="btn secondary-btn">Website Summary</a>
+                <a href="methodology.html" class="btn secondary-btn">Quick Overview</a>
+            </div>
+        </div>
+        <div class="hero-bg-effect"></div>
+    </header>
+
+    <main class="container paper-layout">
+        <section class="card glass-card">
+            <h2>Project Summary</h2>
+            <p><strong>For the full paper with complete methodology, equations, and results, download the PDF using the button above.</strong></p>
+            <p>Recent advancements in extreme low-bit serialization have demonstrated the viability of 1.58-bit ternary large language models for minimizing computational and memory footprints. However, standard low-bit architectures introduce a hypothesized degradation mechanism we term <strong>Boundary Representation Collapse</strong>.</p>
+
+            <blockquote class="core-question">
+                Can we mitigate Boundary Representation Collapse, signal amplitude decay, and Key-Value (KV) cache saturation at extended context scales?
+            </blockquote>
+
+            <p>This paper introduces a hardware-bounded transformer framework to investigate these scaling anomalies. We present three co-dependent systems proposals:</p>
+            <ul class="feature-list">
+                <li><strong>Hourglass Quantization</strong>: Compresses internal projection operators to strict ternary states while isolating vocabulary mappings in continuous precision.</li>
+                <li><strong>Sub-Norm Gain Compensation</strong>: A layer-dependent linear modifier forcing quadratic variance preservation through deep quantized blocks.</li>
+                <li><strong>Ternary-Aligned Chain-of-Thought (TaCoT)</strong>: An optimization constraint utilizing token-masked cross-entropy distillation.</li>
+            </ul>
+        </section>
+
+        <div class="grid-2">
+            <section class="card success-card">
+                <h2>What This Work Demonstrates</h2>
+                <ul class="checklist">
+                    <li>Hourglass architecture implemented</li>
+                    <li>Internal tensors restricted to three active values</li>
+                    <li>Variance schedule executed</li>
+                    <li>BF16 prevented observed float16 NaNs</li>
+                    <li>Training completed without numerical failure</li>
+                </ul>
+            </section>
+
+            <section class="card warning-card">
+                <h2>What This Work Does NOT Demonstrate</h2>
+                <ul class="crosslist">
+                    <li>Boundary Representation Collapse existence</li>
+                    <li>Hourglass improves perplexity</li>
+                    <li>Sub-Norm improves convergence</li>
+                    <li>TaCoT improves reasoning</li>
+                    <li>SWA improves long-context efficiency in ternary models</li>
+                </ul>
+                <p class="muted-text mt-4">These remain hypotheses awaiting future ablation testing.</p>
+            </section>
+        </div>
+
+        <article id="summary" class="paper-card card">
+            <section>
+                <h2>Abstract</h2>
+                <p>Recent advancements in extreme low-bit serialization have demonstrated the viability of 1.58-bit ternary large language models for minimizing computational and memory footprints. However, standard low-bit architectures introduce a hypothesized degradation mechanism we term Boundary Representation Collapse at the embedding interfaces, suffer from signal amplitude decay at extreme depths, and fail to address the memory asymmetry wherein continuous 16-bit Key-Value (KV) cache tensors outgrow weight parameters at extended context scales.</p>
+                <p>We present three co-dependent systems proposals: Hourglass Quantization, Sub-Norm Gain Compensation, and Ternary-Aligned Chain-of-Thought (TaCoT). Preliminary empirical validation over a 6,000-step training regime utilizing a modified Qwen2.5-0.5B architecture provides initial feasibility evidence.</p>
+            </section>
+
+            <section>
+                <h2>Introduction</h2>
+                <p>The scaling laws of deep autoregressive language models have traditionally bound raw performance to parameter density. Extreme low-bit serialization—specifically 1.58-bit ternary quantization—has emerged as a disruptive alternative. By constraining weight matrices to discrete values, ternary networks replace expensive floating-point matrix multiplications with highly efficient integer addition and subtraction operations.</p>
+            </section>
+
+            <section>
+                <h2>Methodology</h2>
+                <p>To mitigate semantic parsing degradation, we establish an asymmetric configuration termed <strong>Hourglass Quantization</strong>. The input embedding layer and the terminal language modeling head are explicitly isolated in continuous high-precision floating-point formats, while internal parameter tensors are mapped to the discrete ternary regime.</p>
+                <p>Our framework introduces a layer-dependent analytical gain modifier \( \alpha_i \) injected directly into the standard RMSNorm step:</p>
+                <div class="equation">\[ \alpha_i = 1.0 + \left(8.0 \cdot \frac{i}{N - 1}\right) \]</div>
+                <p>To prevent KV cache from overwhelming edge VRAM, we propose a <strong>Sink-Anchored Sliding Window Attention (SWA)</strong> matrix layout.</p>
+            </section>
+
+            <section>
+                <h2>Results</h2>
+                <p>The 6,000-step training loop executed without numerical explosion. The cross-entropy loss exhibited an initial decay before rising by step 6000. A direct memory tensor extraction verified the structural implementation of the Hourglass Quantization topology, counting exactly 3 unique values within an internal attention matrix during the active forward pass.</p>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>Copyright © 2026 Harsh Dinodia.</p>
+            <p>GitHub: <a href="https://github.com/harsh2025-sketch" target="_blank" rel="noreferrer noopener">harsh2025-sketch</a></p>
+        </div>
+    </footer>
+</body>
+</html>

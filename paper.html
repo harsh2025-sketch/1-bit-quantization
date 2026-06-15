@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Paper | Hourglass Quantization</title>
+    <meta name="description" content="Rendered full paper for Hourglass Quantization and Context-Bounded Training Strategies for Ternary Transformers">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+    <header class="hero">
+        <div class="container">
+            <div class="notice-box">
+                <div class="notice-icon">📘</div>
+                <div class="notice-text">
+                    <strong>Full paper:</strong> This page renders the research paper directly in the browser instead of redirecting to the PDF.
+                </div>
+            </div>
+            <h1>Hourglass Quantization and Context-Bounded Training Strategies for Ternary Transformers</h1>
+            <p class="subtitle">Design, Implementation, and Preliminary Feasibility Observations</p>
+            <div class="meta-info">
+                <span class="tag">Systems Proposal</span>
+                <span class="tag">June 2026</span>
+            </div>
+            <div class="hero-actions">
+                <a href="index.html" class="btn primary-btn">Back to Home</a>
+                <a href="methodology.html" class="btn secondary-btn">Methodology Summary</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container paper-layout">
+        <article class="paper-card card">
+            <section>
+                <h2>Abstract</h2>
+                <p>Recent advancements in extreme low-bit serialization have demonstrated the viability of 1.58-bit ternary large language models for minimizing computational and memory footprints. However, standard low-bit architectures introduce a hypothesized degradation mechanism we term Boundary Representation Collapse at the embedding interfaces, suffer from signal amplitude decay at extreme depths, and fail to address the memory asymmetry wherein continuous 16-bit Key-Value (KV) cache tensors outgrow weight parameters at extended context scales. This paper introduces a hardware-bounded transformer framework to investigate these scaling anomalies.</p>
+                <p>We present three co-dependent systems proposals: Hourglass Quantization, which compresses internal projection operators to strict ternary states while isolating vocabulary mappings in continuous precision; Sub-Norm Gain Compensation, a layer-dependent linear modifier forcing quadratic variance preservation through deep quantized blocks; and Ternary-Aligned Chain-of-Thought (TaCoT), an optimization constraint utilizing token-masked cross-entropy distillation to isolate logical step-machines within constrained weight spaces. To mitigate KV cache saturation, we propose integrating a Sink-Anchored Sliding Window Attention (SWA) matrix layout into the ternary execution path, theoretically compatible with contexts up to 128k tokens, with KV-cache memory bounded by O(S + W) under the proposed sliding-window formulation.</p>
+                <p>Preliminary empirical validation over a 6,000-step training regime utilizing a modified Qwen2.5-0.5B architecture containing approximately 500 million parameters running under native bfloat16 precision provides initial feasibility evidence. Structural tensor audits confirm strict internal quantization to exactly 3 unique active values alongside continuous vocabulary preservation. Furthermore, hidden-state signal variance was observed to remain stable, progressing from 0.9961 at Layer 00 to 81.0000 at Layer 23, conforming to the engineered quadratic scaling boundaries. This work should be interpreted as a systems feasibility study rather than a benchmark-leading model release.</p>
+            </section>
+
+            <section>
+                <h2>Introduction</h2>
+                <p>The scaling laws of deep autoregressive language models have traditionally bound raw performance to parameter density, driving modern architectures into resource-intensive compute paradigms. This poses an existential bottleneck for decentralized edge computing, where deploying models onto localized hardware is restricted by strict hardware limits.</p>
+                <p>To break this bottleneck, extreme low-bit serialization—specifically 1.58-bit ternary quantization—has emerged as a highly disruptive alternative. By constraining weight matrices to discrete values, ternary networks replace expensive floating-point matrix multiplications with highly efficient integer addition and subtraction operations.</p>
+                <p>Despite their theoretical promise, contemporary ternary frameworks suffer from two hypothesized failure modes that manifest during optimization: structural representation decay and signal attenuation at depth.</p>
+            </section>
+
+            <section>
+                <h2>Related Work</h2>
+                <p>The foundational BitNet architecture demonstrated that neural networks could maintain competitive scaling laws while restricting linear layer weights to W ∈ {-1, +1}. This framework was subsequently refined by BitNet b1.58, which introduced an explicit zero-state, mapping weights to a ternary system W ∈ {-1, 0, +1}.</p>
+                <p>As sequence lengths scale, the computational and memory complexity of standard scaled dot-product attention exhibits quadratic growth, O(L^2). In low-bit transformer literature, an architectural blind spot remains: while weight parameters are compressed to 1.58 bits, the Key-Value (KV) cache tensors are persistently stored in continuous formats.</p>
+            </section>
+
+            <section>
+                <h2>Architectural Methodology</h2>
+                <h3>Hourglass Quantization Topologies</h3>
+                <p>To mitigate the degradation of semantic parsing at the model interfaces, we establish an asymmetric configuration termed Hourglass Quantization. The input embedding layer and the terminal language modeling head are explicitly isolated and maintained in continuous high-precision floating-point formats. Conversely, all internal parameter tensors responsible for projection mappings are mapped to the discrete ternary regime utilizing a scale-invariant Straight-Through Estimator (STE).</p>
+
+                <h3>Sub-Norm Gain Compensation Mechanics</h3>
+                <p>Our framework introduces an explicit, layer-dependent analytical gain modifier \( \alpha_i \) injected directly into the standard RMSNorm step:</p>
+                <div class="equation">\[ \alpha_i = 1.0 + \left(8.0 \cdot \frac{i}{N - 1}\right) \]</div>
+                
+                <h3>Sink-Anchored Sliding Window Attention Matrix</h3>
+                <p>To prevent KV cache from overwhelming edge VRAM, we propose a Sink-Anchored Sliding Window Attention (SWA) matrix layout. For sequence lengths \( L \), local window \( W \), and initial token sink \( S \), the causal attention masking matrix \( M \in \mathbb{R}^{L \times L} \) forces elements outside the active windows to \( -\infty \).</p>
+
+                <h3>Ternary-Aligned Chain-of-Thought (TaCoT)</h3>
+                <p>Extreme low-bit models suffer from a fundamental parameter capacity deficit. We construct a dynamic, boolean loss masking vector \( M_{reasoning} \in \{0, 1\}^T \) based on structural delimiters &lt;think&gt; and &lt;/think&gt;.</p>
+            </section>
+
+            <section>
+                <h2>Empirical Results & Feasibility Observations</h2>
+                <p>The 6,000-step training loop executed without numerical explosion. The cross-entropy loss exhibited an initial decay, dropping to 4.7253 at step 4000, before rising to 7.8247 by step 6000.</p>
+                <p>A direct memory tensor extraction verified the structural implementation of the Hourglass Quantization topology. Counting the unique numeric elements within an internal attention matrix during the active forward pass printed exactly 3 unique values.</p>
+                <p>We recorded the mathematical variance of the hidden states at key layer intervals to confirm the execution of the Sub-Norm Gain Compensation logic. The layer variance stepped from 0.9961 to exactly 81.0000 at the terminal layer.</p>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>Copyright © 2026 Harsh Dinodia.</p>
+            <p>GitHub: <a href="https://github.com/harsh2025-sketch" target="_blank" rel="noreferrer noopener">harsh2025-sketch</a></p>
+        </div>
+    </footer>
+</body>
+</html>
